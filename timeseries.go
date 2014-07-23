@@ -119,10 +119,15 @@ func (tsm *TimeSeriesTopK) tick() {
 	tsm.values = tsm.values.Next()
 }
 
+func (tsm *TimeSeriesTopK) GetCurr(key string) int64 {
+	m := tsm.values.Value.(map[string]Tuple)
+	return m[key].Value
+}
+
 func (tsm *TimeSeriesTopK) AddInt64(key string, delta int64) {
 	m := tsm.values.Value.(map[string]Tuple)
 	if v, ok := m[key]; ok {
-		atomic.AddInt64(&v.Value, delta)
+		m[key] = Tuple{Key: key, Value: v.Value + delta}
 	} else {
 		m[key] = Tuple{Key: key, Value: delta}
 	}
@@ -137,10 +142,10 @@ func (tsm *TimeSeriesTopK) PastN(points int) [][]Tuple {
 		switch v := n.Value.(type) {
 		case map[string]Tuple:
 			tuples := make([]Tuple, len(v))
-			i := 0
+			j := 0
 			for _, val := range v {
-				tuples[i] = val
-				i++
+				tuples[j] = val
+				j++
 			}
 			sort.Sort(sort.Reverse(Tuples(tuples)))
 			r[i] = tuples
